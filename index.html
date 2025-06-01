@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Lucky Draw Counter</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      background: #f8fafc;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 550px;
+      margin: auto;
+      background: #fff;
+      border-radius: 12px;
+      padding: 25px;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+    }
+
+    h2 {
+      text-align: center;
+      color: #1a202c;
+    }
+
+    label {
+      font-weight: bold;
+    }
+
+    input[type="number"], button {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 15px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      box-sizing: border-box;
+      font-size: 16px;
+    }
+
+    input[type="checkbox"] {
+      margin-right: 10px;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      flex: 1;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background 0.2s ease;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    #drawnNumber {
+      font-size: 3.5rem;
+      text-align: center;
+      color: #28a745;
+      margin: 20px 0;
+      transition: transform 0.4s ease, opacity 0.4s ease;
+      opacity: 1;
+    }
+
+    #drawnNumber.animate {
+      transform: scale(2.5);
+      opacity: 0.6;
+    }
+
+    #congrats {
+      text-align: center;
+      font-size: 1.5rem;
+      color: #ff5722;
+      margin-top: 15px;
+      animation: pop 0.5s ease-out;
+    }
+
+    @keyframes pop {
+      0% { transform: scale(0); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    .results {
+      margin-top: 20px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 16px;
+    }
+
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: center;
+    }
+
+    th {
+      background-color: #f1f1f1;
+    }
+
+    @media (max-width: 600px) {
+      .button-group {
+        flex-direction: column;
+      }
+
+      #drawnNumber {
+        font-size: 2.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>🎯 Lucky Draw Counter</h2>
+
+    <label for="startRange">Start of Range:</label>
+    <input type="number" id="startRange" placeholder="e.g. 1" />
+
+    <label for="endRange">End of Range:</label>
+    <input type="number" id="endRange" placeholder="e.g. 100" />
+
+    <label for="drawCount">How Many Numbers to Draw:</label>
+    <input type="number" id="drawCount" placeholder="e.g. 5" />
+
+    <label><input type="checkbox" id="reverseOrder" /> Reverse Order</label>
+
+    <div class="button-group">
+      <button onclick="startDraw()">🎲 Start</button>
+      <button onclick="showNext()">➡️ Next</button>
+      <button onclick="clearSession()" style="background-color:#dc3545;">🧹 Clear</button>
+    </div>
+
+    <div id="drawnNumber"></div>
+    <div id="congrats"></div>
+
+    <div class="results">
+      <h3>📜 Previous Draws:</h3>
+      <div id="previousDraws"></div>
+    </div>
+  </div>
+
+  <script>
+    let drawSequence = [];
+    let currentIndex = 0;
+    let isReverse = false;
+
+    function startDraw() {
+      const start = parseInt(document.getElementById('startRange').value);
+      const end = parseInt(document.getElementById('endRange').value);
+      const count = parseInt(document.getElementById('drawCount').value);
+      isReverse = document.getElementById('reverseOrder').checked;
+
+      if (isNaN(start) || isNaN(end) || isNaN(count) || start >= end || count <= 0 || count > (end - start + 1)) {
+        alert("⚠️ Please enter a valid range and count.");
+        return;
+      }
+
+      const range = Array.from({ length: end - start + 1 }, (_, i) => start + i);
+      const shuffled = range.sort(() => 0.5 - Math.random());
+      drawSequence = shuffled.slice(0, count);
+      if (isReverse) drawSequence.reverse();
+
+      currentIndex = 0;
+      document.getElementById('drawnNumber').textContent = "Click 'Next' to draw numbers...";
+      document.getElementById("congrats").textContent = '';
+      updatePreviousDraws();
+    }
+
+    function showNext() {
+      if (drawSequence.length === 0) {
+        alert("⚠️ Please click 'Start' first.");
+        return;
+      }
+
+      if (currentIndex < drawSequence.length) {
+        const number = drawSequence[currentIndex++];
+        animateNumber(number);
+        updatePreviousDraws();
+
+        if (currentIndex === drawSequence.length) {
+          showCongrats();
+          let history = JSON.parse(sessionStorage.getItem('luckyDrawHistory') || '[]');
+          history.push(drawSequence);
+          sessionStorage.setItem('luckyDrawHistory', JSON.stringify(history));
+        }
+      } else {
+        alert("✅ All numbers drawn!");
+      }
+    }
+
+    function animateNumber(number) {
+      const div = document.getElementById("drawnNumber");
+      div.textContent = number;
+      div.classList.add("animate");
+
+      setTimeout(() => {
+        div.classList.remove("animate");
+      }, 2000);
+    }
+
+    function showCongrats() {
+      document.getElementById("congrats").textContent = "🎉 Congratulations! All numbers drawn.";
+    }
+
+    function updatePreviousDraws() {
+      const prevDiv = document.getElementById("previousDraws");
+      let currentDraw = drawSequence.slice(0, currentIndex);
+      let total = drawSequence.length;
+
+      let tableHTML = `<table>
+        <tr><th>Index</th><th>Drawn Number</th></tr>
+        ${currentDraw.map((num, i) => {
+          let index = isReverse ? total - i : i + 1;
+          return `<tr><td>${index}</td><td>${num}</td></tr>`;
+        }).join('')}
+      </table>`;
+
+      prevDiv.innerHTML = tableHTML;
+    }
+
+    function clearSession() {
+      sessionStorage.removeItem("luckyDrawHistory");
+      document.getElementById("previousDraws").innerHTML = '';
+      document.getElementById("drawnNumber").textContent = '';
+      document.getElementById("congrats").textContent = '';
+      drawSequence = [];
+      currentIndex = 0;
+      alert("Session cleared ✅");
+    }
+
+    window.onload = () => {
+      const history = JSON.parse(sessionStorage.getItem("luckyDrawHistory") || "[]");
+      if (history.length) {
+        const lastDraw = history[history.length - 1];
+        const prevDiv = document.getElementById("previousDraws");
+        let tableHTML = `<p><strong>Last Completed Draw:</strong></p><table>
+          <tr><th>Index</th><th>Drawn Number</th></tr>
+          ${lastDraw.map((num, i) => `<tr><td>${i + 1}</td><td>${num}</td></tr>`).join('')}
+        </table>`;
+        prevDiv.innerHTML = tableHTML;
+      }
+    };
+  </script>
+</body>
+</html>
