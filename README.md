@@ -15,7 +15,7 @@ An interactive and responsive Lucky Draw Counter web app that lets users draw ra
 
 ## 📸 Demo
 
-![Lucky Draw Counter Screenshot](https://your-image-url-if-you-have-one)
+https://spide15.github.io/LuckyDrawNumberGenerator/
 
 ## 🚀 Getting Started
 
@@ -27,4 +27,4 @@ Just a modern web browser!
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/lucky-draw-counter.git
+   git clone https://github.com/spide15/LuckyDrawNumberGenerator.git
